@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:toonflix/models/webtoon_detail_model.dart';
 import 'package:toonflix/models/webtoon_episode_model.dart';
 import 'package:toonflix/services/api_service.dart';
+import 'package:toonflix/widgets/episode_widget.dart';
 
 class DetailScreen extends StatefulWidget {
   final String title, thumb, id;
@@ -105,35 +106,7 @@ class _DetailScreenState extends State<DetailScreen> {
                           if (snapshot.hasData) {
                             return Column(
                               children: [
-                                for (var e in snapshot.data!)
-                                  Container(
-                                    margin: const EdgeInsets.only(bottom: 10),
-                                    decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(25),
-                                        color: const Color(0xFFA2D9CE)),
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 15, horizontal: 30),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            e.title,
-                                            style: const TextStyle(
-                                              color: Color(0xFF138D75),
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 17,
-                                            ),
-                                          ),
-                                          const Icon(
-                                            Icons.chevron_right_rounded,
-                                            color: Color(0xFF138D75),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
+                                for (var e in snapshot.data!) Episode(e: e),
                               ],
                             );
                           }
