@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toonflix/models/webtoon_detail_model.dart';
 import 'package:toonflix/models/webtoon_episode_model.dart';
 import 'package:toonflix/services/api_service.dart';
@@ -17,11 +18,44 @@ class DetailScreen extends StatefulWidget {
 class _DetailScreenState extends State<DetailScreen> {
   late Future<WebtoonDetailModel> webtoon;
   late Future<List<WebtoonEpisodeModel>> episodes;
+  late SharedPreferences prefs; // to store LIKE data(ID)
+  bool isLiked = false;
+
+  Future initPrefs() async {
+    prefs = await SharedPreferences.getInstance();
+    final likedToons = prefs.getStringList('likedToons');
+    if (likedToons != null) {
+      if (likedToons.contains(widget.id)) {
+        setState(() {
+          isLiked = true;
+        });
+      }
+    } else {
+      await prefs.setStringList('likedToons', []);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     webtoon = ApiService.getToonById(widget.id);
     episodes = ApiService.getLatestEpisodesById(widget.id);
+    initPrefs();
+  }
+
+  onHeartTap() async {
+    final likedToons = prefs.getStringList('likedToons');
+    if (likedToons != null) {
+      if (isLiked) {
+        likedToons.remove(widget.id);
+      } else {
+        likedToons.add(widget.id);
+      }
+      await prefs.setStringList('likedToons', likedToons);
+      setState(() {
+        isLiked = !isLiked;
+      });
+    }
   }
 
   @override
@@ -32,6 +66,14 @@ class _DetailScreenState extends State<DetailScreen> {
         elevation: 0, // bar shadow
         backgroundColor: const Color(0xFFA2D9CE),
         foregroundColor: const Color(0xFF138D75),
+        actions: [
+          IconButton(
+            onPressed: onHeartTap,
+            icon: Icon(
+              isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+            ),
+          )
+        ],
         title: Text(
           widget.title,
           style: const TextStyle(fontWeight: FontWeight.w600),
@@ -64,8 +106,9 @@ class _DetailScreenState extends State<DetailScreen> {
                     child: Image.network(
                       widget.thumb,
                       headers: const {
-                        "user-agent":
-                            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+                        // "user-agent":
+                        // "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+                        'Referer': 'https://comic.naver.com',
                       },
                     ),
                   ),
@@ -106,7 +149,8 @@ class _DetailScreenState extends State<DetailScreen> {
                           if (snapshot.hasData) {
                             return Column(
                               children: [
-                                for (var e in snapshot.data!) Episode(e: e),
+                                for (var e in snapshot.data!)
+                                  Episode(e: e, webtoonId: widget.id),
                               ],
                             );
                           }
